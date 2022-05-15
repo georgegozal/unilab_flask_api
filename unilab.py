@@ -99,13 +99,9 @@ def get_all_books():
         book_list.append(b)
     return jsonify(book_list)
 
-    
+# add data to database
 @app.route('/api/book',methods=['POST'])
-def post():
-    # book = LibraryBook.query.filter_by(id=book_id).first()
-    # if book:
-    #     abort(409,message="Book ID is taken...")
-        
+def post():        
     request_data = request.get_json()
     book = LibraryBook(
         title = request_data['title'],
@@ -115,8 +111,10 @@ def post():
         )
     db.session.add(book)
     db.session.commit()
-    # print(book)
-    b = {
+
+    book = LibraryBook.query.order_by(LibraryBook.id.desc()).limit(1).first()
+
+    book = {
                 "id":book.id,
                 "title":book.title,
                 "author":book.author,
@@ -125,31 +123,38 @@ def post():
                 }
     return jsonify(book), 201
 
+@app.route('/api/book/<int:book_id>',methods=['PUT'])
+def put(book_id):
+    request_data = request.get_json()
+    book = LibraryBook.query.filter_by(id=book_id).first()
+    if not book:
+        abort(404,message="Book doesn`t exist, cannot update.")
 
-    # @marshal_with(resource_fields)
-    # def put(self,book_id):
-    #     args = book_update_args.parse_args()
-    #     result = LibraryBook.query.filter_by(id=book_id).first()
-    #     if not result:
-    #         abort(404,message="Book doesn`t exist, cannot update.")
+    if request_data['title']:
+            book.title = request_data['title']
+    if request_data['author']:
+            book.author = request_data['author']
+    if request_data['year']:
+            book.year = request_data['year']
+    if request_data['genre']:
+            book.genre = request_data['genre']
 
-    #     if args['title']:
-    #         result.title = args['title']
-    #     if args['author']:
-    #         result.author = args['author']
-    #     if args['year']:
-    #         result.year = args['year']
-    #     if args['genre']:
-    #         result.genre = args['genre']
+    db.session.commit()
+    book = {
+            "id":book.id,
+            "title":book.title,
+            "author":book.author,
+            "year":book.year,
+            "genre":book.genre
+            }
+    return jsonify(book)
 
-    #     db.session.commit()
-    #     return result
-
-    # def delete(self,book_id):
-    #     result = LibraryBook.query.filter_by(id=book_id).first()
-    #     db.session.delete(result)
-    #     db.session.commit()
-    #     return f"Book with id {bminimalook_id} has been deleted"
+@app.route('/api/book/<int:book_id>',methods=['DELETE'])
+def delete(book_id):
+    book = LibraryBook.query.filter_by(id=book_id).first()
+    db.session.delete(book)
+    db.session.commit()
+    return f"Book with id {book_id} has been deleted"
 
 # api.add_resource(LibraryBook,"/book/<int:book_id>")
 
