@@ -60,8 +60,12 @@ create_database()
 def home():
     return """
         Hello to Api
-        /api/books
-        /api/book/book_id
+        /api/books GET # get all books
+        /api/book/id GET # get single book by id
+        
+        /api/book POST # add book to database
+        /api/book/id PUT # add new book or update by id
+        /api/book/id DELETE # delete book by id
         """
 
 # get single book by id
