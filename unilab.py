@@ -1,23 +1,18 @@
 from crypt import methods
 from flask import Flask, jsonify,request
 from flask_sqlalchemy import SQLAlchemy
-from flask_restful import Api, Resource, reqparse, abort, fields, marshal_with
-
-# https://overiq.com/flask-101/database-modelling-in-flask/
+from flask_restful import abort
+from os import path
 
 DB_NAME = "library.db"
 
 app = Flask(__name__)
-# api = Api(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-# db.init_app(app)
-# db.create_all(app=app)
-# db.create_all()
+
 
 def create_database():
-    db.create_all()
     books = [
         {'title':'In Search of Lost Time ','author':'Marcel Proust','year':1913,'genre':'Modernist'},
         {'title':'Pride and Prejudice','author':'Jane Austen','year': 1813,'genre':'Romance novel'},
@@ -28,8 +23,11 @@ def create_database():
         {'title':'Of Mice and Men','author':'John Steinbeck','year': 1937,'genre':'Novels'},
         {'title':'Brave New World','author':'Aldous Huxley','year':1932 ,'genre':'Science Fiction'},
     ]
-    # db.create_all()
-    for book in books:
+    if not path.exists(DB_NAME):
+        db.create_all()
+        print('Created Database!')
+
+        for book in books:
             library_book = LibraryBook(
                 title=book['title'],
                 author=book['author'],
@@ -38,6 +36,7 @@ def create_database():
             )
             db.session.add(library_book)
             db.session.commit()
+
 
 class LibraryBook(db.Model):
     # __tablename__ = "library"
@@ -55,7 +54,7 @@ class LibraryBook(db.Model):
         Year: {self.year}
         Genre: {self.genre}"""
 
-# create_database()
+create_database()
 
 @app.route('/')
 def home():
@@ -127,19 +126,34 @@ def post():
 def put(book_id):
     request_data = request.get_json()
     book = LibraryBook.query.filter_by(id=book_id).first()
+    print(book)
     if not book:
-        abort(404,message="Book doesn`t exist, cannot update.")
+        new_book = LibraryBook(
+            title = request_data['title'],
+            author = request_data['author'],
+            year = request_data['year'],
+            genre = request_data['genre']
+        )
+        db.session.add(new_book)
+        db.session.commit()
+        print(new_book)
+        print("New Book has been added")
+    
+    else:
+        if request_data['title']:
+                book.title = request_data['title']
+        if request_data['author']:
+                book.author = request_data['author']
+        if request_data['year']:
+                book.year = request_data['year']
+        if request_data['genre']:
+                book.genre = request_data['genre']
 
-    if request_data['title']:
-            book.title = request_data['title']
-    if request_data['author']:
-            book.author = request_data['author']
-    if request_data['year']:
-            book.year = request_data['year']
-    if request_data['genre']:
-            book.genre = request_data['genre']
-
-    db.session.commit()
+        db.session.commit()
+        print("Book has been updated")
+    
+    book = LibraryBook.query.order_by(LibraryBook.id.desc()).limit(1).first()
+    print(book)
     book = {
             "id":book.id,
             "title":book.title,
@@ -156,13 +170,6 @@ def delete(book_id):
     db.session.commit()
     return f"Book with id {book_id} has been deleted"
 
-# api.add_resource(LibraryBook,"/book/<int:book_id>")
-
-# @app.before_first_request
-# def before_first_request():
-#     create_database()
-#     # pass
 
 if __name__ == '__main__':
-    # create_database()
     app.run(debug=True,port=5000)
