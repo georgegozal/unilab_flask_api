@@ -59,13 +59,14 @@ create_database()
 @app.route('/')
 def home():
     return """
-        Hello to Api \n
-        /api/books GET # get all books \n
-        /api/book/id GET # get single book by id \n
+        <ul>Hello to Api
+        <li>/api/books GET # get all books </li>
+        <li>/api/book/id GET # get single book by id </li>
         
-        /api/book POST # add book to database \n
-        /api/book/id PUT # add new book or update by id \n
-        /api/book/id DELETE # delete book by id
+        <li>/api/book POST # add book to database </li>
+        <li>/api/book/id PUT # add new book or update by id </li>
+        <li>/api/book/id DELETE # delete book by id </li>
+        </ul>
         """
 
 # get single book by id
